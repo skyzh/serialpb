@@ -4,18 +4,14 @@ A protocol made for reliable serial packet transmission.
 
 ## Layout
 
-All data on serial are transmitted in 32-byte packet.
+Most significant bit indicates mode: control mode and transmission mode.
 
-First packet
+### Control Mode (1)
 
-```
-| Header (2)  |  Size (2) | Partial Data (26) | Checksum (2) |
-| 0xde | 0xad |   short   |      ......       |    CRC-16    |
-```
+`0xFF` = new transaction
 
-Other packets
+### Transmission Mode
 
-```
-| Header (2)  |  Size (2) | Partial Data (26) | Checksum (2) |
-| 0xbe | 0xef |   short   |      ......       |    CRC-16    |
-```
+Most significant bit is 0. Other 7 bits transmit data. Every 8 bits received
+will be concatenated into a byte. When entering control mode, extra bits
+will be ignored.
