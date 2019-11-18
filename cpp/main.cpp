@@ -30,9 +30,13 @@ string read_from_write_buffer() {
 }
 
 char SerialProtocol::read() {
-    char ch = read_buffer.front();
+    unsigned char ch = read_buffer.front();
     read_buffer.pop();
     return ch;
+}
+
+bool SerialProtocol::available() {
+    return !read_buffer.empty();
 }
 
 void SerialProtocol::write(char ch) {
@@ -58,7 +62,7 @@ TEST_F(BufferProtocolTest, ReadWriteOneByte) {
     bp.write(0xff);
     bp.end();
     write_to_read_buffer(read_from_write_buffer());
-    EXPECT_EQ(bp.read(), -1);
+    EXPECT_EQ(bp.read(), BUFFER_TRANSACTION);
     EXPECT_EQ(bp.read(), 0xff);
 }
 
@@ -70,8 +74,34 @@ TEST_F(BufferProtocolTest, ReadWriteBytes) {
     }
     write_to_read_buffer(read_from_write_buffer());
     for (int i = 0; i < 32; i++) {
-        ASSERT_EQ(bp.read(), -1);
+        ASSERT_EQ(bp.read(), BUFFER_TRANSACTION);
         for (int j = 0; j <= i; j++) ASSERT_EQ(bp.read(), j * 5);
-        ASSERT_EQ(bp.read(), -1);
+        ASSERT_EQ(bp.read(), BUFFER_TRANSACTION);
+    }
+}
+
+TEST_F(BufferProtocolTest, ReadWriteCorruptedBytes) {
+    for (int i = 0; i < 26; i++) {
+        bp.begin();
+        for (int j = 0; j < 5; j++) bp.write(i + 'a');
+        bp.end();
+    }
+    auto buffer = read_from_write_buffer();
+    while (buffer.length() > 0) {
+        write_to_read_buffer(buffer);
+        vector <char> bytes;
+        while (true) {
+            int ch = bp.read();
+            if (ch == BUFFER_END) break;
+            if (ch == BUFFER_TRANSACTION) continue;
+            bytes.push_back(ch);
+        }
+        ASSERT_EQ(bytes.size() % 5, 0);
+        for (int j = 0; j < bytes.size(); j += 5) {
+            for (int k = 1; k < 5; k++) {
+                ASSERT_EQ(bytes[j + k], bytes[j]);
+            }
+        }
+        buffer = buffer.substr(1, buffer.size() - 1);
     }
 }

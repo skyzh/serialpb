@@ -8,8 +8,12 @@
 class SerialProtocol {
 public:
     char read();
+    bool available();
     void write(char ch);
 };
+
+const int BUFFER_TRANSACTION = -1;
+const int BUFFER_END = -2;
 
 class BufferProtocol {
     SerialProtocol *sp;
@@ -17,6 +21,7 @@ class BufferProtocol {
     int send_cnt;
     unsigned char recv_ch;
     unsigned char send_ch;
+    bool transaction_begin;
 public:
     BufferProtocol(SerialProtocol *sp);
     int read();

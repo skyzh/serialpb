@@ -4,18 +4,25 @@
 
 #include "BufferProtocol.h"
 
-BufferProtocol::BufferProtocol(SerialProtocol *sp) : sp(sp), send_cnt(0), recv_cnt(0) {
+BufferProtocol::BufferProtocol(SerialProtocol *sp) : sp(sp), send_cnt(0), recv_cnt(0), transaction_begin(false) {
 
 }
 
 int BufferProtocol::read() {
     while (true) {
+        if (!sp->available()) return BUFFER_END;
         unsigned char ch = sp->read();
         if (ch & 0x80) {
             // Control Mode
-            recv_cnt = 0;
-            return -1;
+            if (ch == 0xff) {
+                recv_cnt = 0;
+                transaction_begin = true;
+            } else {
+                transaction_begin = false;
+            }
+            return BUFFER_TRANSACTION;
         } else {
+            if (!transaction_begin) continue;
             // Transmission Mode
             unsigned char x = recv_ch | (ch >> (7 - recv_cnt));
             ++recv_cnt;
