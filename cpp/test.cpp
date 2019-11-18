@@ -62,8 +62,9 @@ TEST_F(BufferProtocolTest, ReadWriteOneByte) {
     bp.write(0xff);
     bp.end();
     write_to_read_buffer(read_from_write_buffer());
-    EXPECT_EQ(bp.read(), BUFFER_TRANSACTION);
+    EXPECT_EQ(bp.read(), BUFFER_T_BEGIN);
     EXPECT_EQ(bp.read(), 0xff);
+    EXPECT_EQ(bp.read(), BUFFER_T_END);
 }
 
 TEST_F(BufferProtocolTest, ReadWriteBytes) {
@@ -74,9 +75,9 @@ TEST_F(BufferProtocolTest, ReadWriteBytes) {
     }
     write_to_read_buffer(read_from_write_buffer());
     for (int i = 0; i < 32; i++) {
-        ASSERT_EQ(bp.read(), BUFFER_TRANSACTION);
+        ASSERT_EQ(bp.read(), BUFFER_T_BEGIN);
         for (int j = 0; j <= i; j++) ASSERT_EQ(bp.read(), j * 5);
-        ASSERT_EQ(bp.read(), BUFFER_TRANSACTION);
+        ASSERT_EQ(bp.read(), BUFFER_T_END);
     }
 }
 
@@ -93,7 +94,7 @@ TEST_F(BufferProtocolTest, ReadWriteCorruptedBytes) {
         while (true) {
             int ch = bp.read();
             if (ch == BUFFER_END) break;
-            if (ch == BUFFER_TRANSACTION) continue;
+            if (ch == BUFFER_T_END || ch == BUFFER_T_BEGIN) continue;
             bytes.push_back(ch);
         }
         ASSERT_EQ(bytes.size() % 5, 0);
@@ -104,4 +105,22 @@ TEST_F(BufferProtocolTest, ReadWriteCorruptedBytes) {
         }
         buffer = buffer.substr(1, buffer.size() - 1);
     }
+}
+
+TEST_F(BufferProtocolTest, ShouldEndTransaction) {
+    ASSERT_EQ(bp.read(), BUFFER_END);
+    bp.begin();
+    bp.end();
+    bp.begin();
+    bp.end();
+    bp.begin();
+    bp.end();
+    write_to_read_buffer(read_from_write_buffer());
+    ASSERT_EQ(bp.read(), BUFFER_T_BEGIN);
+    ASSERT_EQ(bp.read(), BUFFER_T_END);
+    ASSERT_EQ(bp.read(), BUFFER_T_BEGIN);
+    ASSERT_EQ(bp.read(), BUFFER_T_END);
+    ASSERT_EQ(bp.read(), BUFFER_T_BEGIN);
+    ASSERT_EQ(bp.read(), BUFFER_T_END);
+    ASSERT_EQ(bp.read(), BUFFER_END);
 }

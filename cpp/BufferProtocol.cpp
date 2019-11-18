@@ -17,10 +17,11 @@ int BufferProtocol::read() {
             if (ch == 0xff) {
                 recv_cnt = 0;
                 transaction_begin = true;
+                return BUFFER_T_BEGIN;
             } else {
                 transaction_begin = false;
+                return BUFFER_T_END;
             }
-            return BUFFER_TRANSACTION;
         } else {
             if (!transaction_begin) continue;
             // Transmission Mode

@@ -12,8 +12,9 @@ public:
     void write(char ch);
 };
 
-const int BUFFER_TRANSACTION = -1;
-const int BUFFER_END = -2;
+const int BUFFER_T_BEGIN = -1;
+const int BUFFER_T_END = -2;
+const int BUFFER_END = -3;
 
 class BufferProtocol {
     SerialProtocol *sp;
