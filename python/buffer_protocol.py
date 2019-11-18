@@ -12,7 +12,7 @@ class BufferProtocol(object):
         self.recv_ch = 0
         self.send_ch = 0
         self.transaction_begin = False
-        
+
     async def read(self) -> int:
         while True:
             ch = await self.sp.read()
@@ -29,21 +29,21 @@ class BufferProtocol(object):
                     continue
                 x = self.recv_ch | (ch >> (7 - self.recv_cnt))
                 self.recv_cnt += 1
-                if self.recv_cnt == 9:
+                if self.recv_cnt == 8:
                     self.recv_cnt = 0
                     self.recv_ch = 0
                 else:
-                    self.recv_ch = ch << self.recv_cnt
+                    self.recv_ch = (ch << self.recv_cnt) & 0xff
                 if self.recv_cnt != 1:
                     return x
     
     async def write(self, ch: int):
         self.send_cnt += 1
         x = self.send_ch | ch >> self.send_cnt
-        self.send_ch = (ch << (7 - self.send_cnt)) & ~0x80
+        self.send_ch = (ch << (7 - self.send_cnt)) & 0xff & ~0x80
         await self.sp.write(x)
         if self.send_cnt == 7:
-            await self.sp.write(ch & ~0x80)
+            await self.sp.write(ch & 0xff & ~0x80)
             self.send_cnt = 0
             self.send_ch = 0
 
