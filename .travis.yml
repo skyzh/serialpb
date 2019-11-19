@@ -1,0 +1,33 @@
+language: python
+dist: xenial
+python:
+    "3.7"
+cache:
+  directories:
+    - /home/travis/vcpkg/
+install:
+  - pip3 install -r python/requirements.txt
+  - export CC=gcc-9
+  - export CXX=g++-9
+  - pushd . && cd ~
+  - if [ ! -f "vcpkg/bootstrap-vcpkg.sh" ] ; then git clone https://github.com/Microsoft/vcpkg.git && cd vcpkg && ./bootstrap-vcpkg.sh && cd ..; fi
+  - cd vcpkg && ./vcpkg install gtest && rm -rf buildtrees
+  - export VCPKG_ROOT=$(pwd)
+  - export VCPKG_DEFAULT_TRIPLET=x64-linux
+before_script:
+  - popd
+script:
+  - cmake -Hcpp -GNinja -Bbuild -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+  - cd build && cmake --build .
+  - ./main
+  - cd ../python && pytest
+env:
+  - BUILD_TYPE=DEBUG
+  - BUILD_TYPE=RELEASE
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-9
+      - ninja-build
