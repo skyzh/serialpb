@@ -2,7 +2,6 @@ import asyncio
 
 BUFFER_T_BEGIN = -1
 BUFFER_T_END =  -2
-BUFFER_END = -3
 
 class BufferProtocol(object):
     def __init__(self, sp):

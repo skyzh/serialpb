@@ -109,19 +109,15 @@ TEST_F(BufferProtocolTest, ReadWriteCorruptBytes) {
 
 TEST_F(BufferProtocolTest, ShouldEndTransaction) {
     ASSERT_EQ(bp.read(), BUFFER_END);
-    bp.begin();
-    bp.end();
-    bp.begin();
-    bp.end();
-    bp.begin();
-    bp.end();
+    for (int i = 0; i < 5; i++) {
+        bp.begin();
+        bp.end();
+    }
     write_to_read_buffer(read_from_write_buffer());
-    ASSERT_EQ(bp.read(), BUFFER_T_BEGIN);
-    ASSERT_EQ(bp.read(), BUFFER_T_END);
-    ASSERT_EQ(bp.read(), BUFFER_T_BEGIN);
-    ASSERT_EQ(bp.read(), BUFFER_T_END);
-    ASSERT_EQ(bp.read(), BUFFER_T_BEGIN);
-    ASSERT_EQ(bp.read(), BUFFER_T_END);
+    for (int i = 0; i < 5; i++) {
+        ASSERT_EQ(bp.read(), BUFFER_T_BEGIN);
+        ASSERT_EQ(bp.read(), BUFFER_T_END);
+    }
     ASSERT_EQ(bp.read(), BUFFER_END);
 }
 
