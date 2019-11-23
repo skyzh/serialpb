@@ -15,7 +15,7 @@ install:
 before_script:
   - popd
 script:
-  - cmake -Hcpp -GNinja -Bbuild -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+  - cmake -Hcpp -Bbuild -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
   - cd build && cmake --build .
   - ./main
   - cd ../python && pytest
