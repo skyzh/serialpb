@@ -1,5 +1,5 @@
 language: python
-dist: xenial
+dist: bionic
 python:
     "3.7"
 cache:
@@ -7,8 +7,6 @@ cache:
     - /home/travis/vcpkg/
 install:
   - pip3 install -r python/requirements.txt
-  - export CC=gcc-9
-  - export CXX=g++-9
   - pushd . && cd ~
   - if [ ! -f "vcpkg/bootstrap-vcpkg.sh" ] ; then git clone https://github.com/Microsoft/vcpkg.git && cd vcpkg && ./bootstrap-vcpkg.sh && cd ..; fi
   - cd vcpkg && ./vcpkg install gtest && rm -rf buildtrees
@@ -24,10 +22,3 @@ script:
 env:
   - BUILD_TYPE=DEBUG
   - BUILD_TYPE=RELEASE
-addons:
-  apt:
-    sources:
-      - ppa:ubuntu-toolchain-r-test
-    packages:
-      - g++-9
-      - ninja-build
