@@ -9,7 +9,9 @@ class SerialProtocol:
         self.w = asyncio.Queue()
 
     async def read(self) -> int:
-        return await self.r.get()
+        buf = await self.r.get()
+        self.r.task_done()
+        return buf
 
     async def write(self, ch: int):
         return await self.w.put(ch)
@@ -17,13 +19,13 @@ class SerialProtocol:
     def available(self):
         return not self.r.empty()
 
-async def read_from_queue(q: asyncio.Queue) -> bytes:
-    x = bytearray()
+async def read_from_queue(q: asyncio.Queue) -> list:
+    x = []
     while not q.empty():
         x.append(await q.get())
-    return bytes(x)
+    return x
 
-async def write_to_queue(q: asyncio.Queue, b: bytes):
+async def write_to_queue(q: asyncio.Queue, b: list):
     for ch in b:
         await q.put(ch)
 
@@ -91,6 +93,8 @@ async def test_should_end_transaction():
         assert await bp.read() == BUFFER_T_BEGIN
         assert await bp.read() == BUFFER_T_END
     assert sp.available() == False
+    await write_to_queue(sp.r, [None])
+    assert await bp.read() is None
 
 @pytest.mark.asyncio
 async def test_all_bytes():
@@ -104,5 +108,25 @@ async def test_all_bytes():
     assert await bp.read() == BUFFER_T_BEGIN
     for i in range(256):
         assert await bp.read() == i
+    assert await bp.read() == BUFFER_T_END
+    assert sp.available() == False
+
+@pytest.mark.asyncio
+async def test_all_bytes_interrupt():
+    sp = SerialProtocol()
+    bp = BufferProtocol(sp)
+    await bp.begin()
+    for i in range(256):
+        await bp.write(i)
+    await bp.end()
+    data = await read_from_queue(sp.w)
+    data[2] = None
+    await write_to_queue(sp.r, data)
+    assert await bp.read() == BUFFER_T_BEGIN
+    for i in range(256):
+        ch = await bp.read()
+        assert ch == i or ch is None
+        if ch is None:
+            return
     assert await bp.read() == BUFFER_T_END
     assert sp.available() == False

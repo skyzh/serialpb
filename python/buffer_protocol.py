@@ -15,6 +15,8 @@ class BufferProtocol(object):
     async def read(self) -> int:
         while True:
             ch = await self.sp.read()
+            if ch is None:
+                return None
             if ch & 0x80:
                 if ch == 0xff:
                     self.recv_cnt = 0
